@@ -13,6 +13,8 @@ fn main() {
 
         stdin().read_line(&mut guess).expect("Failed to read line");
 
+        // Result是个枚举
+        // 可以通过match Result进行成功或失败的处理
         let guess: u32 = match guess.trim().parse() {
             Ok(num) => num,
             Err(_) => {
