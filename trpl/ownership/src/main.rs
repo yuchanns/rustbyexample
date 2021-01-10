@@ -27,15 +27,33 @@ fn main() {
     let b = a;
     println!("stack clone a: {} to b: {}", a, b);
     // 函数也会转移所有权
-    taken_ownership(s);
+    taken_ownership(s);/*  */
     // println!("{}", s); //compile error: value borrowed here after move
     let s = String::from("world");
     let s = takes_and_gives_back(s);
-    println!("takes and gives back s: {}", s)
+    println!("takes and gives back s: {}", s);
+
+    let mut s = String::from("world");
+    s = takes_and_gives_back_mut_ownership(s);
+    println!("takes and give back mut s: {}", s);
+    taken_mut_ownership(s);
+    // println!("mut s: {}", s);
 }
 
 fn taken_ownership(s: String) {
     println!("s: {}", s);
+}
+
+fn taken_mut_ownership(mut s: String) {
+    println!("taken mut ownership before overwritten: {}", s);
+    s = String::from("hello");
+    println!("taken mut ownership after overwritten: {}", s)
+}
+
+fn takes_and_gives_back_mut_ownership(mut s: String) -> String {
+    println!("takes_and_gives_back_mut_ownership before overwritten: {}", s);
+    s = String::from("world");
+    s
 }
 
 fn takes_and_gives_back(s: String) -> String {
