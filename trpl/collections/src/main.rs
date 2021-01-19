@@ -1,6 +1,62 @@
 fn main() {
     vectors();
     fat_pointer();
+    string();
+}
+
+fn string() {
+    // 核心字符串类型为&str
+    // 是一个针对字符串的特殊slice
+    let s = "hello world";
+    fn get_type<T>(_: &T) -> &str {
+        std::any::type_name::<T>()
+    }
+    println!("{} is a slice: {:?}", get_type(&&s[..]), &s[..]);
+    // 可以通过.to_string()获取alloc::string::String对象
+    // 实质上是实现了Display trait
+    println!(
+        "{} can be created from &str.to_string()",
+        get_type(&s.to_string())
+    );
+    // String则是Vec[u8]的封装
+    let mut str = String::from("hello world");
+    // String可以动态增长而&str不能
+    // push_str接受的参数类型&str，即引用，不转移所有权
+    str.push_str(s);
+    println!(
+        "String {} created from s which can still be borrowed after: {}",
+        str, s
+    );
+    // 通过slice引用可以创建&str
+    println!("str[..] is a {}", get_type(&&str[..]));
+    // 使用+拼接字符串，将会转移所有权
+    let str2 = " hello again".to_string();
+    let str3 = str + &str2 + " goodbye";
+    // 注意str会被转移所有权，而str2则采取借用的方式
+    // 实际上使用str2的字符串字面量&str
+    println!("str3: {}", str3);
+    // str所有权已转移所以无法再次使用
+    // println!("str: {}", str); // value borrowed here after move
+    // 使用format!或者println!则不会被转移所有权
+    println!(
+        "format str2 and str3: {} \n without taken ownerships of str2 [{}] and str3 [{}]",
+        format!("{}!{}", str2, str3),
+        str2,
+        str3
+    );
+    // 不建议使用索引访问字符串成员，否则可能会导致panic
+    // 可以通过迭代的方式遍历字符串
+    for c in str3.chars() {
+        println!("char: {}", c);
+    }
+    // 也可以访问每个字节
+    for b in str2.bytes() {
+        println!("byte: {}", b);
+    }
+    // 如果需要索引
+    for char_indices in str2.char_indices() {
+        println!("str3[{}] = {}", char_indices.0, char_indices.1);
+    }
 }
 
 fn fat_pointer() {
