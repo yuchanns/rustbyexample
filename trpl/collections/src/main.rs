@@ -1,5 +1,26 @@
 fn main() {
     vectors();
+    fat_pointer();
+}
+
+fn fat_pointer() {
+    // 胖指针携带内存地址以及长度信息的指针
+    let arr1 = &[0; 5];
+    let ptr1 = arr1.as_ptr();
+    // 因为确定了类型和数组长度，所以arr1只携带了内存地址，是普通指针
+    assert_eq!(std::mem::size_of_val(&arr1), 8);
+    // 没有确定长度，arr2需要携带长度信息，是胖指针
+    let arr2: &[i32] = &[0; 5];
+    let ptr2 = arr2.as_ptr();
+    assert_eq!(std::mem::size_of_val(&arr2), 16);
+    // 指针指向的内存地址一样
+    assert_eq!(format!("{:p}", ptr1), format!("{:p}", ptr2));
+    // [i32]和[i32;5]不是同一个类型，他们携带信息不一样
+    assert_eq!(std::mem::size_of::<&[i32]>(), 16);
+    assert_eq!(std::mem::size_of::<&[i32; 5]>(), 8);
+    let str = "hello world";
+    // &str也是胖指针，无法确定字符串长度，需要携带长度信息
+    assert_eq!(std::mem::size_of_val(&str), 16);
 }
 
 fn vectors() {
