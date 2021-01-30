@@ -2,6 +2,7 @@
 
 mod board;
 mod game;
+mod icons;
 mod square;
 mod utils;
 

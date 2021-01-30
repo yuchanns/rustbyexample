@@ -45,16 +45,17 @@ ol, ul {
     position: sticky;
 }
 .head-icon {
-    position: absolute;
-    left: 0.4em;
-    top: 0.4em;
     width: 2em;
+    height: 2em;
+}
+.head-icon-link {
+    margin: 0 .2em;
 }
 
 .game {
     display: flex;
     flex-direction: row;
-    padding-top: 50px;
+    padding-top: 20px;
 }
 
 .game-info {
