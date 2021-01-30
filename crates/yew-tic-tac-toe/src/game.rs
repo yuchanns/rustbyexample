@@ -2,6 +2,7 @@ use crate::board::Board;
 use crate::utils::calculate_winner;
 use yew::prelude::*;
 
+#[derive(Copy, Clone)]
 struct History {
     squares: [&'static str; 9],
 }
@@ -35,9 +36,7 @@ impl Game {
     }
 
     fn jump_to(&mut self, step: usize) {
-        if step == 0 {
-            self.history = vec![History { squares: [""; 9] }];
-        }
+        self.history.truncate(step + 1);
         self.step_number = step;
         self.x_is_next = (step % 2) == 0;
     }
