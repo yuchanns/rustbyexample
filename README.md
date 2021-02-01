@@ -1,5 +1,5 @@
 # rustbyexample
 Yet another learn by example with rust
 
-## badage
+## badge
 ![](https://github.com/yuchanns/rustbyexample/workflows/yew-tic-tac-toe/badge.svg?branch=main)
