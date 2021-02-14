@@ -2,7 +2,6 @@ mod utils;
 
 use rand::Rng;
 
-use std::fmt::{Display, Formatter, Result};
 use wasm_bindgen::prelude::*;
 
 extern crate web_sys;
@@ -21,8 +20,6 @@ macro_rules! log {
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[wasm_bindgen]
-#[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Cell {
     Dead = 0,
@@ -83,10 +80,6 @@ impl Universe {
         self.height
     }
 
-    pub fn cells(&self) -> *const Cell {
-        self.cells.as_ptr()
-    }
-
     pub fn set_width(&mut self, width: u32) {
         self.width = width;
         self.cells = (0..width * self.height).map(|_i| Cell::Dead).collect();
@@ -102,8 +95,9 @@ impl Universe {
         self.cells[idx].toggle();
     }
 
-    pub fn render(&self) -> String {
-        self.to_string()
+    pub fn is_cell_alive(&self, row: u32, column: u32) -> bool {
+        let idx = self.get_index(row, column);
+        self.cells[idx] == Cell::Alive
     }
 
     fn get_index(&self, row: u32, column: u32) -> usize {
@@ -185,19 +179,6 @@ impl Universe {
 
         let _timer = Timer::new("free old cells");
         self.cells = next;
-    }
-}
-
-impl Display for Universe {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        for line in self.cells.as_slice().chunks(self.width as usize) {
-            for &cell in line {
-                let symbol = if cell == Cell::Dead { '◻' } else { '◼' };
-                write!(f, "{}", symbol)?;
-            }
-            write!(f, "\n")?;
-        }
-        Ok(())
     }
 }
 
