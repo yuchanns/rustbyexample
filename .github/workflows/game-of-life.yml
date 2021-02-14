@@ -15,24 +15,7 @@ jobs:
         working-directory: crates/wasm-game-of-life
     steps:
       - uses: actions/checkout@v2
-      - name: Cache Global Bin
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-global-bin
-        with:
-          path: ~/.cargo/bin/wasm-*
-          key: ${{ runner.os }}-build-${{ env.cache-name }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}
-      - name: Cache Dependencies
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-dependencies
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v1
       - name: Install Wasmpack
         run: cargo install wasm-pack
       - name: Build WASM
