@@ -6,13 +6,24 @@ on:
     paths:
       - 'crates/wasm-game-of-life/**'
       - '.github/workflows/game-of-life.yml'
+defaults:
+  run:
+    working-directory: crates/wasm-game-of-life
 jobs:
-  build:
+  test:
     runs-on: ubuntu-20.04
     container: rust:1.49
-    defaults:
-      run:
-        working-directory: crates/wasm-game-of-life
+    steps:
+      - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
+      - name: Install Wasmpack
+        run: cargo install wasm-pack
+      - name: Run Tests
+        run: wasm-pack test --chrome --headless
+  build:
+    runs-on: ubuntu-20.04
+    needs: [test]
+    container: rust:1.49
     steps:
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v1
@@ -27,10 +38,7 @@ jobs:
           path: /__w/rustbyexample/rustbyexample/crates/wasm-game-of-life/pkg
   publish:
     runs-on: ubuntu-20.04
-    needs: [build]
-    defaults:
-      run:
-        working-directory: crates/wasm-game-of-life
+    needs: [test, build]
     env:
       TCB_API_KEY_ID: ${{ secrets.TCB_API_KEY_ID }}
       TCB_API_KEY: ${{ secrets.TCB_API_KEY }}

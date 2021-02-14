@@ -1,7 +1,16 @@
 mod utils;
 
-use wasm_bindgen::prelude::*;
 use std::fmt::{Display, Formatter, Result};
+use wasm_bindgen::prelude::*;
+
+extern crate web_sys;
+
+// A macro to provide `println!(..)`-style syntax for `console.log` logging.
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -21,25 +30,34 @@ pub enum Cell {
 pub struct Universe {
     width: u32,
     height: u32,
-    cells: Vec<Cell>
+    cells: Vec<Cell>,
 }
 
 #[wasm_bindgen]
 impl Universe {
     pub fn new() -> Self {
+        utils::set_panic_hook();
         let (width, height) = (64, 64);
-        let cells = (0..width * height).map(|i| {
-            if i % 2 == 0 || i % 7 == 0 {
-                Cell::Alive
-            } else {
-                Cell::Dead
-            }
-        }).collect();
+        let cells = (0..width * height)
+            .map(|i| {
+                if i % 2 == 0 || i % 7 == 0 {
+                    Cell::Alive
+                } else {
+                    Cell::Dead
+                }
+            })
+            .collect();
 
-        Universe{
+        log!(
+            "the universe is created, with width {}, height {}",
+            width,
+            height
+        );
+
+        Universe {
             width,
             height,
-            cells
+            cells,
         }
     }
 
@@ -55,6 +73,16 @@ impl Universe {
         self.cells.as_ptr()
     }
 
+    pub fn set_width(&mut self, width: u32) {
+        self.width = width;
+        self.cells = (0..width * self.height).map(|_i| Cell::Dead).collect();
+    }
+
+    pub fn set_height(&mut self, height: u32) {
+        self.height = height;
+        self.cells = (0..self.width * height).map(|_i| Cell::Dead).collect();
+    }
+
     pub fn render(&self) -> String {
         self.to_string()
     }
@@ -63,7 +91,7 @@ impl Universe {
         (row * self.width + column) as usize
     }
 
-    fn live_neighbor_count(&self, row: u32, column: u32) ->u8 {
+    fn live_neighbor_count(&self, row: u32, column: u32) -> u8 {
         let mut count = 0;
         for delta_row in [self.height - 1, 0, 1].iter().cloned() {
             for delta_col in [self.width - 1, 0, 1].iter().cloned() {
@@ -93,7 +121,7 @@ impl Universe {
                     (Cell::Alive, 2) | (Cell::Alive, 3) => Cell::Alive,
                     (Cell::Alive, x) if x > 3 => Cell::Dead,
                     (Cell::Dead, 3) => Cell::Alive,
-                    (otherwise, _) => otherwise
+                    (otherwise, _) => otherwise,
                 };
                 next[idx] = next_cell;
             }
@@ -113,5 +141,18 @@ impl Display for Universe {
             write!(f, "\n")?;
         }
         Ok(())
+    }
+}
+
+impl Universe {
+    pub fn get_cells(&self) -> &[Cell] {
+        &self.cells
+    }
+
+    pub fn set_cells(&mut self, cells: &[(u32, u32)]) {
+        for (row, col) in cells.iter().cloned() {
+            let idx = self.get_index(row, col);
+            self.cells[idx] = Cell::Alive;
+        }
     }
 }
