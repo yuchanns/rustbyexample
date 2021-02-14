@@ -1,5 +1,7 @@
 mod utils;
 
+use rand::Rng;
+
 use std::fmt::{Display, Formatter, Result};
 use wasm_bindgen::prelude::*;
 
@@ -47,9 +49,11 @@ pub struct Universe {
 impl Universe {
     pub fn new() -> Self {
         utils::set_panic_hook();
+        let mut rng = rand::thread_rng();
         let (width, height) = (64, 64);
         let cells = (0..width * height)
-            .map(|i| {
+            .map(|_| {
+                let i: u32 = rng.gen();
                 if i % 2 == 0 || i % 7 == 0 {
                     Cell::Alive
                 } else {
