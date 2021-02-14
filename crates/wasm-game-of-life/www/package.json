@@ -1,0 +1,37 @@
+{
+  "name": "wasm-game-of-life",
+  "version": "0.1.0",
+  "description": "a Conway's Game of Life written in Rust WASM",
+  "main": "index.js",
+  "bin": {
+    "create-wasm-app": ".bin/create-wasm-app.js"
+  },
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "start": "webpack-dev-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yuchanns/rustbyexample/crates/wasm-game-of-life"
+  },
+  "keywords": [
+    "webassembly",
+    "wasm",
+    "rust",
+    "webpack",
+    "game of life"
+  ],
+  "author": "yuchanns <airamusume@gmail.com>",
+  "license": "(MIT OR Apache-2.0)",
+  "homepage": "https://game-of-life.yuchanns.xyz",
+  "devDependencies": {
+    "hello-wasm-pack": "^0.1.0",
+    "webpack": "^4.29.3",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.5",
+    "copy-webpack-plugin": "^5.0.0"
+  },
+  "dependencies": {
+    "wasm-game-of-life": "file:../pkg"
+  }
+}

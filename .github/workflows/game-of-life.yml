@@ -1,0 +1,73 @@
+name: game-of-life
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'crates/wasm-game-of-life/**'
+      - '.github/workflows/game-of-life.yml'
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    container: rust:1.49
+    defaults:
+      run:
+        working-directory: crates/wasm-game-of-life
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache Global Bin
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-global-bin
+        with:
+          path: ~/.cargo/bin/wasm-*
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}
+      - name: Cache Dependencies
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-dependencies
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Wasmpack
+        run: cargo install wasm-pack
+      - name: Build WASM
+        run: wasm-pack build
+      - name: Upload WASM Files
+        uses: actions/upload-artifact@v2
+        with:
+          name: game-of-life-pkg
+          path: /__w/rustbyexample/rustbyexample/crates/wasm-game-of-life/pkg
+  publish:
+    runs-on: ubuntu-20.04
+    needs: [build]
+    defaults:
+      run:
+        working-directory: crates/wasm-game-of-life
+    env:
+      TCB_API_KEY_ID: ${{ secrets.TCB_API_KEY_ID }}
+      TCB_API_KEY: ${{ secrets.TCB_API_KEY }}
+      TCB_ENV_ID: ${{ secrets.GAME_OF_LIFE_TCB_ENV_ID }}
+    steps:
+      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v2
+      - name: Download Static Files
+        uses: actions/download-artifact@v2
+        with:
+          name: game-of-life-pkg
+          path: /home/runner/work/rustbyexample/rustbyexample/crates/wasm-game-of-life/pkg
+      - name: Build NPM
+        run: cd www && npm install && npm run build
+      - name: TCB Install
+        run: yarn global add @cloudbase/cli
+      - name: TCB Login
+        run: $(yarn global bin)/tcb login --apiKeyId $TCB_API_KEY_ID --apiKey $TCB_API_KEY
+      - name: TCB Clean
+        run: |
+          yes | $(yarn global bin)/tcb hosting delete -e $TCB_ENV_ID
+      - name: TCB Publish
+        run: $(yarn global bin)/tcb hosting deploy -e $TCB_ENV_ID www/dist
