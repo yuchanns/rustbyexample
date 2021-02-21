@@ -1,0 +1,50 @@
+name: yew-functional-tic-tac-toe
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'crates/yew-functional-tic-tac-toe/**'
+      - '.github/workflows/yew-functional-tic-tac-toe.yml'
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    container: rust:1.49
+    defaults:
+      run:
+        working-directory: crates/yew-functional-tic-tac-toe
+    steps:
+      - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
+      - name: Install Wasmpack
+        run: cargo install wasm-pack
+      - name: Build
+        run: wasm-pack build --target web --out-name wasm --out-dir static
+      - name: Upload Static Files
+        uses: actions/upload-artifact@v2
+        with:
+          name: yew-functional-tic-tac-toe
+          path: /__w/rustbyexample/rustbyexample/crates/yew-functional-tic-tac-toe/static
+  publish:
+    runs-on: ubuntu-20.04
+    needs: [build]
+    env:
+      TCB_API_KEY_ID: ${{ secrets.TCB_API_KEY_ID }}
+      TCB_API_KEY: ${{ secrets.TCB_API_KEY }}
+      TCB_ENV_ID: ${{ secrets.YEW_FUNCTIONAL_TAC_TOE_TCB_ENV_ID }}
+    steps:
+      - uses: actions/setup-node@v1
+      - name: Download Static Files
+        uses: actions/download-artifact@v2
+        with:
+          name: yew-functional-tic-tac-toe
+          path: static
+      - name: TCB install
+        run: yarn global add @cloudbase/cli
+      - name: TCB login
+        run: $(yarn global bin)/tcb login --apiKeyId $TCB_API_KEY_ID --apiKey $TCB_API_KEY
+      - name: TCB clean
+        run: |
+          yes | $(yarn global bin)/tcb hosting delete -e $TCB_ENV_ID
+      - name: TCB publish
+        run: $(yarn global bin)/tcb hosting deploy -e $TCB_ENV_ID static
