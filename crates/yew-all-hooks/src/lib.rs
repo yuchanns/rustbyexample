@@ -1,4 +1,5 @@
 mod app;
+mod callback;
 mod hooks;
 
 use crate::app::AppStartup;

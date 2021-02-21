@@ -1,3 +1,4 @@
+use crate::callback::ButtonOuter;
 use crate::hooks::effect::UseEffect;
 use crate::hooks::reducer::UseReducer;
 use crate::hooks::refs::UseRef;
@@ -17,6 +18,8 @@ pub fn app() -> Html {
             <UseReducer />
             <h3>{"use_effect"}</h3>
             <UseEffect />
+            <h3>{"callback"}</h3>
+            <ButtonOuter />
         </div>
     }
 }
