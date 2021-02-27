@@ -16,7 +16,7 @@ pub fn hello_world() -> Html {
             </blockquote>
             <figcaption class="font-medium">
               <div class="text-cyan-600">
-                {"yuchanns"}
+                {"yuchanns123"}
               </div>
               <div class="text-gray-500">
                 {"Backend Developer"}
