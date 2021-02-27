@@ -1,6 +1,11 @@
 ## yew-tailwindcss
 use tailwindcss with yew framework
 
+![](https://github.com/yuchanns/rustbyexample/workflows/yew-tailwindcss/badge.svg?branch=main)
+
+## Preview
+[Tencent CDN](https://yew-tailwindcss.yuchanns.xyz/)
+
 ### Develop
 `cargo-watch` is required: `cargo install cargo-watch`.
 ```bash
