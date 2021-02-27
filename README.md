@@ -24,3 +24,5 @@ If you would like to find some examples of using Yew, check the codes under [`cr
 As using Yew Functional Components, see [`crates/yew-functional-tic-tac-toe`](https://github.com/yuchanns/rustbyexample/tree/main/crates/yew-functional-tic-tac-toe) for more example usages. It's another implementation on yew functional components of tutorial `tic-tac-toe`.
 
 [`crates/yew-all-hooks`](https://github.com/yuchanns/rustbyexample/tree/main/crates/yew-all-hooks) shows you guys the usages of yew functional hooks.
+
+[`crates/yew-tailwindcss`](https://github.com/yuchanns/rustbyexample/tree/main/crates/yew-tailwindcss) shows the way of using tailwindcss in a yew project.
