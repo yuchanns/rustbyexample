@@ -10,8 +10,21 @@ use crate::components::toggle_theme::ToggleTheme;
 
 #[function_component(Navbar)]
 pub fn navbar() -> Html {
-    let (is_dark, set_is_dark) = use_state(move || false);
-    let set_is_dark_cb = { Callback::from(move |is_dark: bool| set_is_dark(is_dark)) };
+    let (is_dark, set_is_dark) = {
+        let window = web_sys::window().expect("no global `window` exists");
+        let mut is_perfered_dark = false;
+        match window.match_media("(prefers-color-scheme: dark)") {
+            Ok(option_media_query_list) => match option_media_query_list {
+                Some(media_query_list) => {
+                    is_perfered_dark = media_query_list.matches();
+                }
+                None => {}
+            },
+            Err(_) => {}
+        };
+        use_state(move || is_perfered_dark)
+    };
+    let set_is_dark_cb = Callback::from(move |is_dark: bool| set_is_dark(is_dark));
     html! {
         <header class="header">
             <nav class="nav">
