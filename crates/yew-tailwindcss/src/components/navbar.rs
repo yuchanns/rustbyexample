@@ -6,13 +6,21 @@ use crate::components::icons::{
     util_github_alt::UtilGithubAlt,
 };
 
+use crate::components::toggle_theme::ToggleTheme;
+
 #[function_component(Navbar)]
 pub fn navbar() -> Html {
+    let (is_dark, set_is_dark) = use_state(move || false);
+    let set_is_dark_cb = { Callback::from(move |is_dark: bool| set_is_dark(is_dark)) };
     html! {
         <header class="header">
             <nav class="nav">
                 <a href="/" class="w-10 h-10 absolute lg:fixed m-6 select-none outline-none" focusable="false">
-                    <img src="/rust.svg" alt="logo" />
+                    {if *is_dark {
+                    html!{<img src="/rust-moon.svg" alt="logo" />}
+                    } else {
+                    html!{<img src="/rust.svg" alt="logo" />}
+                    }}
                 </a>
                 <div class="spacer"></div>
                 <div class="right">
@@ -22,6 +30,7 @@ pub fn navbar() -> Html {
                 <a title="Bookmarks"><RiStickyNotes /></a>
                 <a href="https://twitter.com/airamusume" title="twitter" class="hidden md:block"><FeatherTwitter /></a>
                 <a href="https://github.com/yuchanns" title="github" class="hidden md:block"><UtilGithubAlt /></a>
+                <ToggleTheme is_dark=is_dark.clone() set_is_dark=set_is_dark_cb />
                 </div>
             </nav>
         </header>
