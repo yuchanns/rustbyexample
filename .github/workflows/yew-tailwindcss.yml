@@ -21,15 +21,22 @@ jobs:
           toolchain: stable
           default: true
       - uses: actions/checkout@v2
+      - uses: jetli/wasm-pack-action@v0.3.0
+        with:
+          version: 'latest'
+      - name: Build Wasm
+        run: wasm-pack build --target web --release yew-test
+      - name: Optimize Wasm
+        run: |
+          wget https://github.com/WebAssembly/binaryen/releases/download/version_100/binaryen-version_100-x86_64-linux.tar.gz
+          tar -zxvf binaryen-version_100-x86_64-linux.tar.gz
+          ./binaryen-version_100/bin/wasm-opt -Oz -o yew-test/pkg/yew_test_bg.wasm yew-test/pkg/yew_test_bg.wasm
       - name: Install Dependencies
-        run: yarn --cwd styles install
-      - name: Build Css
-        run: yarn --cwd styles build
-      - uses: Swatinem/rust-cache@v1
-      - name: Install Wasmpack
-        run: cargo install wasm-pack
-      - name: Build
-        run: wasm-pack build --target web --out-name wasm --out-dir ./dist
+        run: yarn install
+      - name: Link Wasm
+        run: npm link ./yew-test/pkg
+      - name: Build Site
+        run: yarn build
       - name: Upload Static Files
         uses: actions/upload-artifact@v2
         with:

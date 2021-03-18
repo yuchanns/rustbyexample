@@ -1,6 +1,6 @@
 module.exports = {
   purge: [
-      '../src/**/*.rs'
+      './yew-test/src/**/*.rs'
   ],
   darkMode: 'class', // or 'media' or 'class'
   theme: {

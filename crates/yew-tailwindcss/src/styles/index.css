@@ -149,24 +149,24 @@ html.dark {
 
     color: var(--fg);
 
-    a {
-        font-weight: inherit;
-        text-decoration: none;
-        border-bottom: 1px solid transparent;
+a {
+    font-weight: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
 
-    &:hover {
-         border-bottom: 1px solid var(--fg);
-     }
-    }
+&:hover {
+     border-bottom: 1px solid var(--fg);
+ }
+}
 
-    a code {
-        color: inherit;
-    }
+a code {
+    color: inherit;
+}
 
-    hr {
-        width: 50px;
-        margin: 2em auto;
-    }
+hr {
+    width: 50px;
+    margin: 2em auto;
+}
 }
 
 html.dark .prose {
@@ -181,9 +181,9 @@ a.item {
     border-bottom: none !important;
     opacity: 0.6;
 
-    &:hover {
-         opacity: 1;
-    }
+&:hover {
+     opacity: 1;
+ }
 }
 
 a.header-anchor {
