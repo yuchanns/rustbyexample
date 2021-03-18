@@ -1,0 +1,19 @@
+{
+  "name": "vite-rsw",
+  "version": "1.0.0",
+  "description": "wasm-pack with vite",
+  "main": "index.js",
+  "repository": "https://github.com/yuchanns/rustbyexample/crates/vite-plugin-rsw",
+  "author": "yuchanns <airamusume@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "vite": "^2.1.2",
+    "vite-plugin-rsw": "^1.1.8"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  }
+}
