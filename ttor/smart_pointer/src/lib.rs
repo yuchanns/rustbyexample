@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use std::cell::RefCell;
+    use std::borrow::Cow;
+    use std::cell::{Cell, RefCell};
     use std::rc::{Rc, Weak};
+    use std::thread;
 
     /// Box<'a T> can be dereferred because of implementing std::op::Deref
     ///
@@ -127,5 +129,102 @@ mod tests {
         first.borrow_mut().next = Some(second.clone());
         second.borrow_mut().next = Some(third.clone());
         third.borrow_mut().next = Some(first.clone());
+    }
+
+    #[test]
+    fn smart_pointer_cell() {
+        struct Foo {
+            x: u32,
+            y: Cell<u32>,
+        }
+        let mut foo = Foo {
+            x: 1,
+            y: Cell::new(3),
+        };
+        assert_eq!(1, foo.x);
+        // get copies the value in Cell<T> and returns it
+        assert_eq!(3, foo.y.get());
+        foo.y.set(5);
+        assert_eq!(5, foo.y.get());
+        // use get_mut to borrow a mutable value which does not implement `Copy` trait
+        let y = foo.y.get_mut();
+        *y = 10;
+        assert_eq!(10, foo.y.get());
+    }
+
+    #[test]
+    #[should_panic]
+    fn smart_pointer_ref_cell() {
+        let x = RefCell::new(vec![1, 2, 3, 4]);
+        let mut mut_v1 = x.borrow_mut();
+        mut_v1.push(5);
+        x.borrow_mut().push(6); // runtime panic: already borrowed: BorrowMutError
+        println!("{:?}", x);
+    }
+
+    #[test]
+    fn smart_pointer_cow() {
+        fn abs_all(input: &mut Cow<[i32]>) {
+            for i in 0..input.len() {
+                if input[i] < 0 {
+                    input.to_mut()[i] = -input[i];
+                }
+            }
+        }
+        fn abs_sum(ns: &[i32]) -> i32 {
+            let mut lst = Cow::from(ns);
+            abs_all(&mut lst);
+            lst.iter().fold(0, |acc, &n| acc + n)
+        }
+
+        let s1 = [1, 2, 3];
+        let mut i1 = Cow::from(&s1[..]);
+        // no write no copy
+        abs_all(&mut i1);
+        println!("IN: {:?}", s1);
+        println!("OUT: {:?}", i1);
+        let s2 = [1, 2, -3, -4];
+        let mut i2 = Cow::from(&s2[..]);
+        // copy due to write
+        abs_all(&mut i2);
+        println!("IN: {:?}", s2);
+        println!("OUT: {:?}", i2);
+        let mut v1 = Cow::from(vec![1, 2, -3, -4]);
+        // no copy due to Vec<T> has the ownership
+        // to_mut will get the ownership
+        abs_all(&mut v1);
+        println!("IN/OUT: {:?}", v1);
+        let s3 = [1, 3, 5, 6];
+        // no write no copy
+        let sum1 = abs_sum(&s3);
+        println!("{:?}", s3);
+        println!("{:?}", sum1);
+        let s4 = [1, 3, -5, -6];
+        // write and copy
+        let sum2 = abs_sum(&s4);
+        println!("{:?}", s4);
+        println!("{:?}", sum2);
+
+        #[derive(Debug)]
+        struct Token<'a> {
+            raw: Cow<'a, str>,
+        }
+        impl<'a> Token<'a> {
+            pub fn new<S>(raw: S) -> Token<'a>
+            where
+                S: Into<Cow<'a, str>>,
+            {
+                Token { raw: raw.into() }
+            }
+        }
+        let token1 = Token::new("hello");
+        let token2 = Token::new("Rust".to_string());
+        // thread safe pointer
+        thread::spawn(move || {
+            println!("token1: {:?}", token1);
+            println!("token2: {:?}", token2);
+        })
+        .join()
+        .unwrap();
     }
 }
