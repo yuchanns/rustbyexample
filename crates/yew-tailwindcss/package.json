@@ -8,6 +8,7 @@
   "license": "MIT",
   "private": true,
   "devDependencies": {
+    "@types/node": "^14.14.37",
     "autoprefixer": "^10.2.5",
     "postcss": "^8.2.8",
     "tailwindcss": "^2.0.4",
@@ -15,8 +16,8 @@
     "vite-plugin-rsw": "^1.1.8"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "NODE_ENV=dev vite",
+    "build": "NODE_ENV=production vite build",
     "serve": "vite preview"
   },
   "dependencies": {
