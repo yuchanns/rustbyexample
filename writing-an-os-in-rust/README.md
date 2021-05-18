@@ -15,6 +15,10 @@ brew install qemu
 # on big sur, add the entitlement to the qemu-system-x86_64 binary
 codesign -s - --entitlements .config/entitlements.xml --force /usr/local/bin/qemu-system-x86_64
 ```
+**bootimage**
+```sh
+cargo install bootimage
+```
 ## Run
 ```sh
 cargo run -- -accel hvf -cpu host

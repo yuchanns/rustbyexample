@@ -1,0 +1,39 @@
+name: writing-an-os-in-rust
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'writing-an-os-in-rust/**'
+      - '.github/workflows/writing-an-os-in-rust.yml'
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    defaults:
+      run:
+        working-directory: writing-an-os-in-rust
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install QEMU
+        run: |
+          sudo apt update
+          sudo apt install qemu
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: rust-src, llvm-tools-preview
+      - name: Install Bootimage
+        run: cargo install bootimage
+      - name: Cache Dependencies
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-dependencies
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}
+      - name: Run Tests
+        run: cargo test
