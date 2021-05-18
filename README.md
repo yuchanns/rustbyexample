@@ -15,6 +15,7 @@ More examples of rust usage are welcome, so feel free to create **PR**s to help 
 * Looking for [THE RUST PROGRAMING LANGUAGE](https://doc.rust-lang.org/book/) example, see `folder trpl`.
 * Looking for [RUST编程之道](https://book.douban.com/subject/30418895/) example, see `folder ttor`.
 * Looking for some crates example, see `folder crates`.
+* Writing an OS in Rust, see `folder write-an-os-in-rust`.
 
 ### Wasm
 seeking for the start of Wasm? check it on [`crates/wasm-game-of-life`](https://github.com/yuchanns/rustbyexample/tree/main/crates/wasm-game-of-life) to implement a Conway's Game of Life.
