@@ -1,5 +1,5 @@
 [package]
-name = "writing-an-os-in-rust"
+name = "writing_an_os_in_rust"
 version = "0.1.0"
 edition = "2018"
 
@@ -19,7 +19,3 @@ uart_16550 = "0.2.0"
 [dependencies.lazy_static]
 version = "1.0"
 features = ["spin_no_std"]
-
-[[tests]]
-name = "should_panic"
-harness = false
