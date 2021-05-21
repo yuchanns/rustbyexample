@@ -1,6 +1,8 @@
 # Writing an OS in Rust
 [Writing an OS in Rust](https://os.phil-opp.com/)
 
+![](https://github.com/yuchanns/rustbyexample/workflows/writing-an-os-in-rust/badge.svg?branch=main)
+
 ## Requirement
 **rustup component**
 ```sh
