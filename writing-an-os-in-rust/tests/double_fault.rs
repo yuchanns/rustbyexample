@@ -10,7 +10,7 @@ pub extern "C" fn _start() -> ! {
     double_fault_panic();
     serial_println!("[test did not panic]");
     exit_qemu(QemuExitCode::Failed);
-    loop {}
+    writing_an_os_in_rust::hlt_loop();
 }
 
 fn double_fault_panic() {
@@ -24,5 +24,5 @@ fn double_fault_panic() {
 fn panic(_info: &PanicInfo) -> ! {
     serial_println!("[ok]");
     exit_qemu(QemuExitCode::Success);
-    loop {}
+    writing_an_os_in_rust::hlt_loop();
 }

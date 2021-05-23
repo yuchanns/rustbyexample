@@ -23,7 +23,6 @@ fn panic(info: &PanicInfo) -> ! {
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     println!("Hello Yuchanns{}", "!");
-    println!("Hello Again{}", "!");
 
     writing_an_os_in_rust::init();
 
@@ -31,5 +30,5 @@ pub extern "C" fn _start() -> ! {
     test_main();
 
     println!("It did not crash!");
-    loop {}
+    writing_an_os_in_rust::hlt_loop();
 }

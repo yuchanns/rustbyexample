@@ -11,7 +11,7 @@ use writing_an_os_in_rust::println;
 pub extern "C" fn _start() -> ! {
     test_main();
 
-    loop {}
+    writing_an_os_in_rust::hlt_loop();
 }
 
 #[panic_handler]
