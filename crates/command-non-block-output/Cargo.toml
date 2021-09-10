@@ -1,0 +1,9 @@
+[package]
+name = "command-non-block-output"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.9.0", features = ["io-util", "process", "macros", "rt-multi-thread"] }
