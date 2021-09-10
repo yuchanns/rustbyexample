@@ -10,6 +10,7 @@ More examples of rust usage are welcome, so feel free to create **PR**s to help 
 ![](https://github.com/yuchanns/rustbyexample/workflows/yew-functional/badge.svg?branch=main)
 ![](https://github.com/yuchanns/rustbyexample/workflows/yew-functional-tic-tac-toe/badge.svg?branch=main)
 ![](https://github.com/yuchanns/rustbyexample/workflows/yew-tailwindcss/badge.svg?branch=main)
+![](https://github.com/yuchanns/rustbyexample/workflows/writing-an-os-in-rust/badge.svg?branch=main)
 
 ## Navigation
 * Looking for [THE RUST PROGRAMING LANGUAGE](https://doc.rust-lang.org/book/) example, see `folder trpl`.
