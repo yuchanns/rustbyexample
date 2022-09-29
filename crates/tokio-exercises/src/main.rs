@@ -1,3 +1,7 @@
+#![feature(generic_associated_types)]
+#![feature(type_alias_impl_trait)]
+mod gat;
+
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpListener,
