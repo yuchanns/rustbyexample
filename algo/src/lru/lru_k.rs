@@ -66,10 +66,26 @@ impl LRUKReplacer {
         }
     }
 
-    fn find(&self, frame_id: i32) -> Option<usize> {
-        self.frames
+    fn find_mut(&mut self, frame_id: i32) -> Option<(usize, &mut Frame)> {
+        if let Some(index) = self
+            .frames
             .iter()
             .position(|frame| frame.frame_id == frame_id)
+        {
+            return Some((index, &mut self.frames[index]));
+        }
+        None
+    }
+
+    fn find(&self, frame_id: i32) -> Option<(usize, &Frame)> {
+        if let Some(index) = self
+            .frames
+            .iter()
+            .position(|frame| frame.frame_id == frame_id)
+        {
+            return Some((index, &self.frames[index]));
+        }
+        None
     }
 }
 
@@ -128,19 +144,24 @@ impl Replacer for LRUKReplacer {
     /// * `frame_id` - id of frame that received a new access.
     fn record_access(&mut self, frame_id: i32) {
         self.current_timestamp += 1;
-        let index = self.find(frame_id).unwrap_or_else(|| {
-            assert!(
-                self.frames.len() <= self.replacer_size,
-                "frame size exceeds the limit"
-            );
-            self.frames.push(Frame {
-                frame_id,
-                accesses: vec![],
-                evictable: false,
-            });
-            self.frames.len() - 1
-        });
-        self.frames[index].accesses.push(self.current_timestamp)
+        let current_timestamp = self.current_timestamp;
+        let frame: &mut Frame = match self.find_mut(frame_id) {
+            Some((_, frame)) => frame,
+            None => {
+                assert!(
+                    self.frames.len() <= self.replacer_size,
+                    "frame size exceeds the limit"
+                );
+                self.frames.push(Frame {
+                    frame_id,
+                    accesses: vec![],
+                    evictable: false,
+                });
+                let index = self.frames.len() - 1;
+                &mut self.frames[index]
+            }
+        };
+        frame.accesses.push(current_timestamp)
     }
 
     /// Toggle whether a frame is evictable or non-evictable. This function
@@ -161,16 +182,17 @@ impl Replacer for LRUKReplacer {
     /// * `frame_id` - id of frame whose 'evictable' status will be modified
     /// * `set_evictable` - whether the given frame is evictable or not
     fn set_evictable(&mut self, frame_id: i32, set_evictable: bool) {
-        let index = self
-            .find(frame_id)
-            .unwrap_or_else(|| panic!("frame_id {} is invalid", frame_id));
-        let mut frame = &mut self.frames[index];
-        if set_evictable && !frame.evictable {
+        let mut frame = match self.find_mut(frame_id) {
+            Some((_, frame)) => frame,
+            None => panic!("frame_id {} is invalid", frame_id),
+        };
+        let evictable = frame.evictable;
+        frame.evictable = set_evictable;
+        if set_evictable && !evictable {
             self.curr_size += 1;
-        } else if !set_evictable && frame.evictable {
+        } else if !set_evictable && evictable {
             self.curr_size -= 1;
         }
-        frame.evictable = set_evictable;
     }
 
     /// Remove an evictable frame from replacer, along with its access
@@ -190,7 +212,7 @@ impl Replacer for LRUKReplacer {
     ///
     /// * `frame_id` - id of frame to be removed
     fn remove(&mut self, frame_id: i32) {
-        if let Some(index) = self.find(frame_id) {
+        if let Some((index, _)) = self.find(frame_id) {
             assert!(
                 self.frames[index].evictable,
                 "frame_id {} is non-evictable",
