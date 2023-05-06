@@ -1,4 +1,4 @@
-mod lru_k;
+pub mod lru_k;
 
 pub trait Replacer {
     fn evict(&mut self) -> Option<i32>;

@@ -27,14 +27,16 @@ use super::Replacer;
 ///
 /// # Example
 /// ```
+/// # use algo::lru::{lru_k::LRUKReplacer, Replacer};
+///
 /// let mut lru_k_replacer = LRUKReplacer::new(3, 2);
 /// lru_k_replacer.record_access(1);
 /// lru_k_replacer.record_access(2);
 /// lru_k_replacer.record_access(3);
 /// lru_k_replacer.record_access(1);
-/// lru_k_replacer.set_evictable(1);
-/// lru_k_replacer.set_evictable(2);
-/// lru_k_replacer.set_evictable(3);
+/// lru_k_replacer.set_evictable(1, true);
+/// lru_k_replacer.set_evictable(2, true);
+/// lru_k_replacer.set_evictable(3, true);
 /// let frame_id = lru_k_replacer.evict();
 /// assert_eq!(frame_id, Some(2));
 /// ```
