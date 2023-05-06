@@ -67,25 +67,17 @@ impl LRUKReplacer {
     }
 
     fn find_mut(&mut self, frame_id: i32) -> Option<(usize, &mut Frame)> {
-        if let Some(index) = self
-            .frames
+        self.frames
             .iter()
             .position(|frame| frame.frame_id == frame_id)
-        {
-            return Some((index, &mut self.frames[index]));
-        }
-        None
+            .and_then(|index| Some((index, &mut self.frames[index])))
     }
 
     fn find(&self, frame_id: i32) -> Option<(usize, &Frame)> {
-        if let Some(index) = self
-            .frames
+        self.frames
             .iter()
             .position(|frame| frame.frame_id == frame_id)
-        {
-            return Some((index, &self.frames[index]));
-        }
-        None
+            .and_then(|index| Some((index, &self.frames[index])))
     }
 }
 
@@ -112,27 +104,25 @@ impl Replacer for LRUKReplacer {
     /// * An `Option<i32>` that contains the id of frame that is evicted successfully or `None`.
     fn evict(&mut self) -> Option<i32> {
         self.current_timestamp += 1;
-        let mut distance = 0;
-        let mut frame_id = 0;
+        let (mut distance, mut result) = (0, None);
         for frame in self.frames.iter().rev() {
             if !frame.evictable {
                 continue;
             }
             if frame.accesses.len() < self.k {
                 distance = std::usize::MAX;
-                frame_id = frame.frame_id;
+                result = Some(frame.frame_id);
             } else if self.current_timestamp - frame.accesses[frame.accesses.len() - self.k]
                 > distance
             {
                 distance = self.current_timestamp - frame.accesses[self.k - 1];
-                frame_id = frame.frame_id;
+                result = Some(frame.frame_id);
             }
         }
-        if frame_id != 0 {
+        result.and_then(|frame_id| {
             self.remove(frame_id);
-            return Some(frame_id);
-        }
-        None
+            Some(frame_id)
+        })
     }
 
     /// Record the event that the given frame id is accessed at current
@@ -182,10 +172,9 @@ impl Replacer for LRUKReplacer {
     /// * `frame_id` - id of frame whose 'evictable' status will be modified
     /// * `set_evictable` - whether the given frame is evictable or not
     fn set_evictable(&mut self, frame_id: i32, set_evictable: bool) {
-        let mut frame = match self.find_mut(frame_id) {
-            Some((_, frame)) => frame,
-            None => panic!("frame_id {} is invalid", frame_id),
-        };
+        let (_, mut frame) = self
+            .find_mut(frame_id)
+            .unwrap_or_else(|| panic!("frame_id {} is invalid", frame_id));
         let evictable = frame.evictable;
         frame.evictable = set_evictable;
         if set_evictable && !evictable {
