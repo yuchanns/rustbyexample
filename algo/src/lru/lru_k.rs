@@ -1,3 +1,5 @@
+use rustflake::Snowflake;
+
 use super::Replacer;
 
 /// LRUKReplacer implements the Replacer trait
@@ -44,14 +46,14 @@ pub struct LRUKReplacer {
     replacer_size: usize,
     curr_size: usize,
     frames: Vec<Frame>,
-    current_timestamp: usize,
+    snowflake: Snowflake,
     k: usize,
 }
 
 #[derive(PartialEq, Eq)]
 pub struct Frame {
     frame_id: i32,
-    accesses: Vec<usize>,
+    accesses: Vec<i64>,
     evictable: bool,
 }
 
@@ -59,10 +61,10 @@ impl LRUKReplacer {
     pub fn new(replacer_size: usize, k: usize) -> LRUKReplacer {
         LRUKReplacer {
             replacer_size,
+            k,
             curr_size: 0,
             frames: Vec::with_capacity(replacer_size),
-            current_timestamp: 0,
-            k,
+            snowflake: Snowflake::default(),
         }
     }
 
@@ -103,19 +105,17 @@ impl Replacer for LRUKReplacer {
     ///
     /// * An `Option<i32>` that contains the id of frame that is evicted successfully or `None`.
     fn evict(&mut self) -> Option<i32> {
-        self.current_timestamp += 1;
+        let current_timestamp = self.snowflake.generate();
         let (mut distance, mut result) = (0, None);
         for frame in self.frames.iter().rev() {
             if !frame.evictable {
                 continue;
             }
             if frame.accesses.len() < self.k {
-                distance = std::usize::MAX;
+                distance = std::i64::MAX;
                 result = Some(frame.frame_id);
-            } else if self.current_timestamp - frame.accesses[frame.accesses.len() - self.k]
-                > distance
-            {
-                distance = self.current_timestamp - frame.accesses[self.k - 1];
+            } else if current_timestamp - frame.accesses[frame.accesses.len() - self.k] > distance {
+                distance = current_timestamp - frame.accesses[self.k - 1];
                 result = Some(frame.frame_id);
             }
         }
@@ -133,8 +133,7 @@ impl Replacer for LRUKReplacer {
     ///
     /// * `frame_id` - id of frame that received a new access.
     fn record_access(&mut self, frame_id: i32) {
-        self.current_timestamp += 1;
-        let current_timestamp = self.current_timestamp;
+        let current_timestamp = self.snowflake.generate();
         let frame: &mut Frame = match self.find_mut(frame_id) {
             Some((_, frame)) => frame,
             None => {
