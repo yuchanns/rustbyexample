@@ -211,9 +211,7 @@ impl Replacer for LRUKReplacer {
 
 #[cfg(test)]
 mod tests {
-    use crate::lru::Replacer;
-
-    use super::LRUKReplacer;
+    use crate::lru::{lru_k::LRUKReplacer, Replacer};
 
     #[test]
     fn sample_test() {
