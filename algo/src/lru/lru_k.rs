@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use rustflake::Snowflake;
 
 use super::Replacer;
@@ -48,6 +50,7 @@ pub struct LRUKReplacer {
     frames: Vec<Frame>,
     snowflake: Snowflake,
     k: usize,
+    mutex: Arc<Mutex<()>>,
 }
 
 #[derive(PartialEq, Eq)]
@@ -65,21 +68,93 @@ impl LRUKReplacer {
             curr_size: 0,
             frames: Vec::with_capacity(replacer_size),
             snowflake: Snowflake::default(),
+            mutex: Arc::new(Mutex::new(())),
         }
     }
 
-    fn find_mut(&mut self, frame_id: i32) -> Option<(usize, &mut Frame)> {
+    fn find_mut_(&mut self, frame_id: i32) -> Option<(usize, &mut Frame)> {
         self.frames
             .iter()
             .position(|frame| frame.frame_id == frame_id)
             .and_then(|index| Some((index, &mut self.frames[index])))
     }
 
-    fn find(&self, frame_id: i32) -> Option<(usize, &Frame)> {
+    fn find_(&self, frame_id: i32) -> Option<(usize, &Frame)> {
         self.frames
             .iter()
             .position(|frame| frame.frame_id == frame_id)
             .and_then(|index| Some((index, &self.frames[index])))
+    }
+
+    fn evict_(&mut self) -> Option<i32> {
+        let current_timestamp = self.snowflake.generate();
+        let (mut distance, mut result) = (0, None);
+        for frame in self.frames.iter().rev() {
+            if !frame.evictable {
+                continue;
+            }
+            if frame.accesses.len() < self.k {
+                distance = std::i64::MAX;
+                result = Some(frame.frame_id);
+            } else if current_timestamp - frame.accesses[frame.accesses.len() - self.k] > distance {
+                distance = current_timestamp - frame.accesses[self.k - 1];
+                result = Some(frame.frame_id);
+            }
+        }
+        result.and_then(|frame_id| {
+            self.remove_(frame_id);
+            Some(frame_id)
+        })
+    }
+
+    fn remove_(&mut self, frame_id: i32) {
+        if let Some((index, _)) = self.find_(frame_id) {
+            assert!(
+                self.frames[index].evictable,
+                "frame_id {} is non-evictable",
+                frame_id
+            );
+            self.frames.remove(index);
+            self.curr_size -= 1;
+        }
+    }
+
+    fn record_access_(&mut self, frame_id: i32) {
+        let current_timestamp = self.snowflake.generate();
+        let frame: &mut Frame = match self.find_mut_(frame_id) {
+            Some((_, frame)) => frame,
+            None => {
+                assert!(
+                    self.frames.len() < self.replacer_size,
+                    "frame size exceeds the limit"
+                );
+                self.frames.push(Frame {
+                    frame_id,
+                    accesses: vec![],
+                    evictable: false,
+                });
+                let index = self.frames.len() - 1;
+                &mut self.frames[index]
+            }
+        };
+        frame.accesses.push(current_timestamp)
+    }
+
+    fn set_evictable_(&mut self, frame_id: i32, set_evictable: bool) {
+        let (_, mut frame) = self
+            .find_mut_(frame_id)
+            .unwrap_or_else(|| panic!("frame_id {} is invalid", frame_id));
+        let evictable = frame.evictable;
+        frame.evictable = set_evictable;
+        if set_evictable && !evictable {
+            self.curr_size += 1;
+        } else if !set_evictable && evictable {
+            self.curr_size -= 1;
+        }
+    }
+
+    fn size_(&self) -> usize {
+        self.curr_size
     }
 }
 
@@ -105,24 +180,9 @@ impl Replacer for LRUKReplacer {
     ///
     /// * An `Option<i32>` that contains the id of frame that is evicted successfully or `None`.
     fn evict(&mut self) -> Option<i32> {
-        let current_timestamp = self.snowflake.generate();
-        let (mut distance, mut result) = (0, None);
-        for frame in self.frames.iter().rev() {
-            if !frame.evictable {
-                continue;
-            }
-            if frame.accesses.len() < self.k {
-                distance = std::i64::MAX;
-                result = Some(frame.frame_id);
-            } else if current_timestamp - frame.accesses[frame.accesses.len() - self.k] > distance {
-                distance = current_timestamp - frame.accesses[self.k - 1];
-                result = Some(frame.frame_id);
-            }
-        }
-        result.and_then(|frame_id| {
-            self.remove(frame_id);
-            Some(frame_id)
-        })
+        let c_mutex = Arc::clone(&self.mutex);
+        let _lock = *c_mutex.lock().unwrap();
+        self.evict_()
     }
 
     /// Record the event that the given frame id is accessed at current
@@ -133,24 +193,9 @@ impl Replacer for LRUKReplacer {
     ///
     /// * `frame_id` - id of frame that received a new access.
     fn record_access(&mut self, frame_id: i32) {
-        let current_timestamp = self.snowflake.generate();
-        let frame: &mut Frame = match self.find_mut(frame_id) {
-            Some((_, frame)) => frame,
-            None => {
-                assert!(
-                    self.frames.len() < self.replacer_size,
-                    "frame size exceeds the limit"
-                );
-                self.frames.push(Frame {
-                    frame_id,
-                    accesses: vec![],
-                    evictable: false,
-                });
-                let index = self.frames.len() - 1;
-                &mut self.frames[index]
-            }
-        };
-        frame.accesses.push(current_timestamp)
+        let c_mutex = Arc::clone(&self.mutex);
+        let _lock = *c_mutex.lock().unwrap();
+        self.record_access_(frame_id)
     }
 
     /// Toggle whether a frame is evictable or non-evictable. This function
@@ -171,16 +216,9 @@ impl Replacer for LRUKReplacer {
     /// * `frame_id` - id of frame whose 'evictable' status will be modified
     /// * `set_evictable` - whether the given frame is evictable or not
     fn set_evictable(&mut self, frame_id: i32, set_evictable: bool) {
-        let (_, mut frame) = self
-            .find_mut(frame_id)
-            .unwrap_or_else(|| panic!("frame_id {} is invalid", frame_id));
-        let evictable = frame.evictable;
-        frame.evictable = set_evictable;
-        if set_evictable && !evictable {
-            self.curr_size += 1;
-        } else if !set_evictable && evictable {
-            self.curr_size -= 1;
-        }
+        let c_mutex = Arc::clone(&self.mutex);
+        let _lock = *c_mutex.lock().unwrap();
+        self.set_evictable_(frame_id, set_evictable)
     }
 
     /// Remove an evictable frame from replacer, along with its access
@@ -200,15 +238,9 @@ impl Replacer for LRUKReplacer {
     ///
     /// * `frame_id` - id of frame to be removed
     fn remove(&mut self, frame_id: i32) {
-        if let Some((index, _)) = self.find(frame_id) {
-            assert!(
-                self.frames[index].evictable,
-                "frame_id {} is non-evictable",
-                frame_id
-            );
-            self.frames.remove(index);
-            self.curr_size -= 1;
-        }
+        let c_mutex = Arc::clone(&self.mutex);
+        let _lock = *c_mutex.lock().unwrap();
+        self.remove_(frame_id)
     }
 
     /// Return replacer's size, which tracks the number of evictable frames.
@@ -217,7 +249,9 @@ impl Replacer for LRUKReplacer {
     ///
     /// * `usize`
     fn size(&self) -> usize {
-        self.curr_size
+        let c_mutex = Arc::clone(&self.mutex);
+        let _lock = *c_mutex.lock().unwrap();
+        self.size_()
     }
 }
 
