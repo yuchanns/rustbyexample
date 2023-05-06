@@ -72,21 +72,21 @@ impl LRUKReplacer {
         }
     }
 
-    fn find_mut_(&mut self, frame_id: i32) -> Option<(usize, &mut Frame)> {
+    fn _find_mut(&mut self, frame_id: i32) -> Option<(usize, &mut Frame)> {
         self.frames
             .iter()
             .position(|frame| frame.frame_id == frame_id)
             .and_then(|index| Some((index, &mut self.frames[index])))
     }
 
-    fn find_(&self, frame_id: i32) -> Option<(usize, &Frame)> {
+    fn _find(&self, frame_id: i32) -> Option<(usize, &Frame)> {
         self.frames
             .iter()
             .position(|frame| frame.frame_id == frame_id)
             .and_then(|index| Some((index, &self.frames[index])))
     }
 
-    fn evict_(&mut self) -> Option<i32> {
+    fn _evict(&mut self) -> Option<i32> {
         let current_timestamp = self.snowflake.generate();
         let (mut distance, mut result) = (0, None);
         for frame in self.frames.iter().rev() {
@@ -102,13 +102,13 @@ impl LRUKReplacer {
             }
         }
         result.and_then(|frame_id| {
-            self.remove_(frame_id);
+            self._remove(frame_id);
             Some(frame_id)
         })
     }
 
-    fn remove_(&mut self, frame_id: i32) {
-        if let Some((index, _)) = self.find_(frame_id) {
+    fn _remove(&mut self, frame_id: i32) {
+        if let Some((index, _)) = self._find(frame_id) {
             assert!(
                 self.frames[index].evictable,
                 "frame_id {} is non-evictable",
@@ -119,9 +119,9 @@ impl LRUKReplacer {
         }
     }
 
-    fn record_access_(&mut self, frame_id: i32) {
+    fn _record_access(&mut self, frame_id: i32) {
         let current_timestamp = self.snowflake.generate();
-        let frame: &mut Frame = match self.find_mut_(frame_id) {
+        let frame: &mut Frame = match self._find_mut(frame_id) {
             Some((_, frame)) => frame,
             None => {
                 assert!(
@@ -140,9 +140,9 @@ impl LRUKReplacer {
         frame.accesses.push(current_timestamp)
     }
 
-    fn set_evictable_(&mut self, frame_id: i32, set_evictable: bool) {
+    fn _set_evictable(&mut self, frame_id: i32, set_evictable: bool) {
         let (_, mut frame) = self
-            .find_mut_(frame_id)
+            ._find_mut(frame_id)
             .unwrap_or_else(|| panic!("frame_id {} is invalid", frame_id));
         let evictable = frame.evictable;
         frame.evictable = set_evictable;
@@ -153,7 +153,7 @@ impl LRUKReplacer {
         }
     }
 
-    fn size_(&self) -> usize {
+    fn _size(&self) -> usize {
         self.curr_size
     }
 }
@@ -182,7 +182,7 @@ impl Replacer for LRUKReplacer {
     fn evict(&mut self) -> Option<i32> {
         let c_mutex = Arc::clone(&self.mutex);
         let _lock = *c_mutex.lock().unwrap();
-        self.evict_()
+        self._evict()
     }
 
     /// Record the event that the given frame id is accessed at current
@@ -195,7 +195,7 @@ impl Replacer for LRUKReplacer {
     fn record_access(&mut self, frame_id: i32) {
         let c_mutex = Arc::clone(&self.mutex);
         let _lock = *c_mutex.lock().unwrap();
-        self.record_access_(frame_id)
+        self._record_access(frame_id)
     }
 
     /// Toggle whether a frame is evictable or non-evictable. This function
@@ -218,7 +218,7 @@ impl Replacer for LRUKReplacer {
     fn set_evictable(&mut self, frame_id: i32, set_evictable: bool) {
         let c_mutex = Arc::clone(&self.mutex);
         let _lock = *c_mutex.lock().unwrap();
-        self.set_evictable_(frame_id, set_evictable)
+        self._set_evictable(frame_id, set_evictable)
     }
 
     /// Remove an evictable frame from replacer, along with its access
@@ -240,7 +240,7 @@ impl Replacer for LRUKReplacer {
     fn remove(&mut self, frame_id: i32) {
         let c_mutex = Arc::clone(&self.mutex);
         let _lock = *c_mutex.lock().unwrap();
-        self.remove_(frame_id)
+        self._remove(frame_id)
     }
 
     /// Return replacer's size, which tracks the number of evictable frames.
@@ -251,7 +251,7 @@ impl Replacer for LRUKReplacer {
     fn size(&self) -> usize {
         let c_mutex = Arc::clone(&self.mutex);
         let _lock = *c_mutex.lock().unwrap();
-        self.size_()
+        self._size()
     }
 }
 
