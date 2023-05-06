@@ -149,7 +149,7 @@ impl Replacer for LRUKReplacer {
             Some((_, frame)) => frame,
             None => {
                 assert!(
-                    self.frames.len() <= self.replacer_size,
+                    self.frames.len() < self.replacer_size,
                     "frame size exceeds the limit"
                 );
                 self.frames.push(Frame {
